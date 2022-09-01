@@ -2,40 +2,16 @@
 
 This is a performance testing framework for [Spark SQL](https://spark.apache.org/sql/) in [Apache Spark](https://spark.apache.org/) 3.3+.
 
-**Note: This README is still under development. Please also check our source code for more information.**
-
 # Quick Start
 
-## Running from command line.
-
 ```
-$ bin/run --help
-
-spark-sql-perf 0.2.0
-Usage: spark-sql-perf [options]
-
-  -b <value> | --benchmark <value>
-        the name of the benchmark to run
-  -m <value> | --master <value
-        the master url to use
-  -f <value> | --filter <value>
-        a filter on the name of the queries to run
-  -i <value> | --iterations <value>
-        the number of iterations to run
-  --help
-        prints this usage text
-        
-$ bin/run --benchmark DatasetPerformance
+sbt package
+sbt runBenchmark --benchmark DatasetPerformance
+sbt runMLBenchmark --benchmark DatasetPerformance
 ```
-
-The first run of `bin/run` will build the library.
-
-## Build
-
-Use `sbt package` or `sbt assembly` to build the library jar.  
-Use `sbt +package` to build for scala 2.13.
 
 ## Local performance tests
+
 The framework contains twelve benchmarks that can be executed in local mode. They are organized into three classes and target different components and functions of Spark:
 * [DatasetPerformance](https://github.com/databricks/spark-sql-perf/blob/master/src/main/scala/com/databricks/spark/sql/perf/DatasetPerformance.scala) compares the performance of the old RDD API with the new Dataframe and Dataset APIs.
 These benchmarks can be launched with the command `bin/run --benchmark DatasetPerformance`
@@ -47,8 +23,6 @@ These benchmarks can be launched with the command `bin/run --benchmark Aggregati
 
 # MLlib tests
 
-To run MLlib tests, run `/bin/run-ml yamlfile`, where `yamlfile` is the path to a YAML configuration
-file describing tests to run and their parameters.
 
 # TPC-DS
 
