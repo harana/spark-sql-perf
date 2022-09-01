@@ -27,7 +27,9 @@ import scala.util.control.NonFatal
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Dataset, DataFrame, SQLContext, SparkSession}
 import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
-import org.apache.spark.SparkContext
+
+import io.prometheus.client.exporter._
+import io.prometheus.client._
 
 import com.databricks.spark.sql.perf.cpu._
 
@@ -103,12 +105,13 @@ abstract class Benchmark(
       includeBreakdown: Boolean = false,
       iterations: Int = 3,
       variations: Seq[Variation[_]] = Seq(Variation("StandardRun", Seq("true")) { _ => {} }),
+      pushGateway: Option[PushGateway],
       tags: Map[String, String] = Map.empty,
       timeout: Long = 0L,
       resultLocation: String = resultsLocation,
       forkThread: Boolean = true) = {
 
-    new ExperimentStatus(executionsToRun, includeBreakdown, iterations, variations, tags,
+    new ExperimentStatus(executionsToRun, includeBreakdown, iterations, variations, pushGateway, tags,
       timeout, resultLocation, sqlContext, allTables, currentConfiguration, forkThread = forkThread)
   }
 
@@ -292,6 +295,7 @@ object Benchmark {
       includeBreakdown: Boolean,
       iterations: Int,
       variations: Seq[Variation[_]],
+      pushGateway: Option[PushGateway],
       tags: Map[String, String],
       timeout: Long,
       resultsLocation: String,
@@ -326,8 +330,10 @@ object Benchmark {
 
     val timestamp = System.currentTimeMillis()
     val resultPath = s"$resultsLocation/timestamp=$timestamp"
-    val combinations = cartesianProduct(variations.map(l => (0 until l.options.size).toList).toList)
+    val combinations = cartesianProduct(variations.map(l => l.options.indices.toList).toList)
     val resultsFuture = Future {
+
+      val registry = new CollectorRegistry
 
       // If we're running queries, create tables for them
       executionsToRun
@@ -390,6 +396,9 @@ object Benchmark {
               case _ => ""
             }
             startTime = System.currentTimeMillis()
+            val metricName = s"spark_sql_performance_${q.name}"
+            val duration = Gauge.build.name(s"${metricName}_duration").register(registry)
+            val durationTimer = duration.startTimer
 
             val singleResultT = Try {
               q.benchmark(includeBreakdown, setup, currentMessages, timeout,
@@ -403,6 +412,8 @@ object Benchmark {
                   logMessage(s"Execution '${q.name}' failed: ${f.message}")
                 }
                 singleResult.executionTime.foreach { time =>
+                  durationTimer.setDuration()
+                  if (pushGateway.isDefined) pushGateway.get.pushAdd(registry, metricName)
                   logMessage(s"Execution time: ${time / 1000}s")
                 }
                 currentResults += singleResult

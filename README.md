@@ -10,6 +10,11 @@ sbt runBenchmark --benchmark DatasetPerformance
 sbt runMLBenchmark --benchmark DatasetPerformance
 ```
 
+For available options:
+```
+sbt "runBenchmark --help"
+```
+
 ## Local performance tests
 
 The framework contains twelve benchmarks that can be executed in local mode. They are organized into three classes and target different components and functions of Spark:

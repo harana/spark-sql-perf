@@ -16,11 +16,14 @@
 
 package com.databricks.spark.sql.perf
 
+import io.prometheus.client.exporter.{BasicAuthHttpConnectionFactory, PushGateway}
+
 import java.net.InetAddress
 import java.io.File
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.sql.functions._
-import org.apache.spark.{SparkContext, SparkConf}
+import org.apache.spark.{SparkConf, SparkContext}
+
 import scala.util.Try
 
 case class RunConfig(
@@ -28,7 +31,10 @@ case class RunConfig(
     benchmarkName: String = null,
     filter: Option[String] = None,
     iterations: Int = 3,
-    baseline: Option[Long] = None)
+    baseline: Option[Long] = None,
+    pushGatewayHost: Option[String] = None,
+    pushGatewayUsername: Option[String] = None,
+    pushGatewayPassword: Option[String] = None)
 
 /**
  * Runs a benchmark locally and prints the results to the screen.
@@ -53,6 +59,15 @@ object RunBenchmark {
       opt[Long]('c', "compare")
           .action((x, c) => c.copy(baseline = Some(x)))
           .text("the timestamp of the baseline experiment to compare with")
+      opt[String]('p', "push-gateway-host")
+        .action((x, c) => c.copy(pushGatewayHost = Some(x)))
+        .text("the host for the Prometheus Push Gateway e.g. 127.0.0.1:9000")
+      opt[String]("push-gateway-username")
+        .action((x, c) => c.copy(pushGatewayUsername = Some(x)))
+        .text("the username for the Prometheus Push Gateway")
+      opt[String]("push-gateway-password")
+        .action((x, c) => c.copy(pushGatewayPassword = Some(x)))
+        .text("the password for the Prometheus Push Gateway")
       help("help")
         .text("prints this usage text")
     }
@@ -64,6 +79,19 @@ object RunBenchmark {
         System.exit(1)
     }
   }
+
+  def pushGateway(config: RunConfig) = {
+    config.pushGatewayHost.map { host =>
+      val pg = new PushGateway(host)
+      if (config.pushGatewayUsername.isDefined) {
+        pg.setConnectionFactory(new BasicAuthHttpConnectionFactory(
+          config.pushGatewayUsername.get, config.pushGatewayPassword.get
+        ))
+      }
+      pg
+    }
+  }
+
 
   def run(config: RunConfig): Unit = {
     val conf = new SparkConf()
@@ -100,6 +128,7 @@ object RunBenchmark {
     val experiment = benchmark.runExperiment(
       executionsToRun = allQueries,
       iterations = config.iterations,
+      pushGateway = pushGateway(config),
       tags = Map(
         "runtype" -> "local",
         "host" -> InetAddress.getLocalHost().getHostName()))

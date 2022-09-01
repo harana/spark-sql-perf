@@ -33,7 +33,9 @@ object MLLib {
     val ml = new MLLib()
     val benchmarks = MLBenchmarks.benchmarkObjects
     val e = ml.runExperiment(
-      executionsToRun = benchmarks)
+      executionsToRun = benchmarks,
+      pushGateway = RunBenchmark.pushGateway(runConfig)
+    )
     e.waitForFinish(1000 * 60 * 30)
     logger.info("Run finished")
     e.getCurrentResults()
@@ -93,6 +95,7 @@ object MLLib {
     val e = b.runExperiment(
       executionsToRun = benchmarks,
       iterations = 1, // If you want to increase the number of iterations, add more seeds
+      pushGateway = None,
       resultLocation = conf.output,
       forkThread = false)
     e.waitForFinish(conf.timeout.toSeconds.toInt)

@@ -28,7 +28,8 @@ libraryDependencies ++= Seq(
   "com.github.scopt" %% "scopt" % "4.1.0",
   "com.twitter" %% "util-jvm" % "22.7.0" % "provided",
   "org.scalatest" %% "scalatest" % "3.2.13" % "test",
-  "org.yaml" % "snakeyaml" % "1.23"
+  "org.yaml" % "snakeyaml" % "1.23",
+  "io.prometheus" % "simpleclient_pushgateway" % "0.16.0"
 )
 
 fork := true
