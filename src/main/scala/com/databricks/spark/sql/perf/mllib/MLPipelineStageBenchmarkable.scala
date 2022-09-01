@@ -29,7 +29,7 @@ class MLPipelineStageBenchmarkable(
   override protected[mllib] def beforeBenchmark(): Unit = {
     logger.info(s"$this beforeBenchmark")
     try {
-      testData = test.testDataSet(param)
+    testData = test.testDataSet(param)
       testData.cache()
       testDataCount = Some(testData.count())
       trainingData = test.trainingDataSet(param)
@@ -37,7 +37,7 @@ class MLPipelineStageBenchmarkable(
       trainingData.count()
     } catch {
       case NonFatal(e) =>
-        println(s"$this error in beforeBenchmark: ${e.getStackTraceString}")
+        println(s"$this error in beforeBenchmark: ${getStackTraceAsString(e)}")
         throw e
     }
   }
@@ -103,7 +103,7 @@ class MLPipelineStageBenchmarkable(
           mode = executionMode.toString,
           parameters = params.toMap,
           failure = Some(Failure(e.getClass.getSimpleName,
-            e.getMessage + ":\n" + e.getStackTraceString)))
+            e.getMessage + ":\n" + getStackTraceAsString(e))))
     } finally {
       Option(testData).map(_.unpersist())
       Option(trainingData).map(_.unpersist())

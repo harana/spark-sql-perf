@@ -9,6 +9,7 @@ sbt/*.jar
 
 # sbt specific
 build/*.jar
+.bsp/
 .cache/
 .history/
 .lib/

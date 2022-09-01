@@ -16,6 +16,7 @@
 
 package com.databricks.spark.sql.perf
 
+import java.io._
 import java.util.UUID
 
 import org.slf4j.LoggerFactory
@@ -85,7 +86,7 @@ trait Benchmarkable {
               mode = executionMode.toString,
               parameters = Map.empty,
               failure = Some(Failure(e.getClass.getSimpleName,
-                e.getMessage + ":\n" + e.getStackTraceString)))
+                e.getMessage + ":\n" + getStackTraceAsString(e))))
         }
       }
     }
@@ -121,5 +122,11 @@ trait Benchmarkable {
     val res = f
     val endTime = System.nanoTime()
     (endTime - startTime).nanos -> res
+  }
+
+  protected def getStackTraceAsString(t: Throwable) = {
+    val sw = new StringWriter
+    t.printStackTrace(new PrintWriter(sw))
+    sw.toString
   }
 }

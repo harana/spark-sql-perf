@@ -212,7 +212,7 @@ abstract class Benchmark(
       new SparkPerfExecution(
         name,
         Map.empty,
-        () => Unit,
+        () => (),
         () => rdd.count(),
         rdd.toDebugString)
     }
@@ -475,14 +475,14 @@ object Benchmark {
 
     /** Returns results from an actively running experiment. */
     def getCurrentResults() = {
-      val tbl = sqlContext.createDataFrame(currentResults)
+      val tbl = sqlContext.createDataFrame(currentResults.toList)
       tbl.createOrReplaceTempView("currentResults")
       tbl
     }
 
     /** Returns full iterations from an actively running experiment. */
     def getCurrentRuns() = {
-      val tbl = sqlContext.createDataFrame(currentRuns)
+      val tbl = sqlContext.createDataFrame(currentRuns.toList)
       tbl.createOrReplaceTempView("currentRuns")
       tbl
     }
